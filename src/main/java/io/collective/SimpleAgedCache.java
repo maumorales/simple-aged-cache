@@ -1,9 +1,7 @@
 package io.collective;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class SimpleAgedCache {
@@ -12,7 +10,6 @@ public class SimpleAgedCache {
     private int entryCount = 0;
     private ExpirableEntry[] entries = new ExpirableEntry[INITIAL_CAPACITY];
     private Clock clock;
-    private Instant createdInstant;
 
     public SimpleAgedCache() {
         this(Clock.systemDefaultZone());
@@ -20,7 +17,6 @@ public class SimpleAgedCache {
 
     public SimpleAgedCache(Clock clock) {
         this.clock = clock;
-        this.createdInstant = clock.instant();
     }
 
     public void put(Object key, Object value, int retentionInMillis) {
@@ -87,19 +83,18 @@ public class SimpleAgedCache {
     }
 
     private boolean isExpired(ExpirableEntry entry) {
-        Instant expirationInstant = createdInstant.plusMillis(entry.retentionInMillis);
-        return expirationInstant.isBefore(clock.instant());
+        return entry.expirationInstant.isBefore(clock.instant());
     }
 
     private class ExpirableEntry {
         public Object key;
         public Object value;
-        public int retentionInMillis;
+        public Instant expirationInstant;
 
         public ExpirableEntry(Object key, Object value, int retentionInMillis) {
             this.key = key;
             this.value = value;
-            this.retentionInMillis = retentionInMillis;
+            this.expirationInstant = clock.instant().plusMillis(retentionInMillis);
         }
 
         @Override
